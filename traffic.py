@@ -6,10 +6,11 @@ import tensorflow as tf
 
 from sklearn.model_selection import train_test_split
 
+# CHANGE ME
 EPOCHS = 10
 IMG_WIDTH = 30
 IMG_HEIGHT = 30
-NUM_CATEGORIES = 43
+NUM_CATEGORIES = 3
 TEST_SIZE = 0.4
 
 
@@ -66,12 +67,11 @@ def load_data(data_dir):
             continue
         for pic in os.listdir(os.path.join(data_dir, cat)):
             dir = os.path.join(data_dir, cat, pic)
-            #print(f"directory: {dir}")
             img = cv2.imread(dir)
+            img = img / 255.0
             img.resize(IMG_WIDTH, IMG_HEIGHT, 3)
             images.append(img)
             labels.append(cat)
-    #print (images, labels)
     return (images, labels)
 
     # raise NotImplementedError
@@ -84,29 +84,37 @@ def get_model():
     The output layer should have `NUM_CATEGORIES` units, one for each category.
     """
 
-    model = tf.keras.Sequential(
-        [
-            tf.keras.layers.Dense(32, activation='relu', input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)),
+    # Create a convolutional neural network
+    model = tf.keras.models.Sequential([
 
-            #tf.keras.layers.Conv2D(
-            #    32, (3, 3), activation="relu"
-            #),
-            tf.keras.layers.Dense(32, activation='relu'),
-            tf.keras.layers.Dense(NUM_CATEGORIES, activation='softmax')
-        ]
-    )
-    model.summary()
+        # Convolutional layer. Learn 32 filters using a 3x3 kernel
+        tf.keras.layers.Conv2D(
+            32, (3, 3), activation="relu", input_shape=(IMG_WIDTH, IMG_HEIGHT, 3)
+        ),
 
+        # Max-pooling layer, using 2x2 pool size
+        tf.keras.layers.MaxPooling2D(pool_size=(2, 2)),
+
+        # Flatten units
+        tf.keras.layers.Flatten(),
+
+        # Add a hidden layer with dropout
+        tf.keras.layers.Dense(128, activation="relu"),
+        tf.keras.layers.Dropout(0.5),
+
+        # Add an output layer with output units for all 10 digits
+        tf.keras.layers.Dense(NUM_CATEGORIES, activation="softmax")
+    ])
+
+    # Train neural network
     model.compile(
-    optimizer=tf.keras.optimizers.RMSprop(),  # Optimizer
-    # Loss function to minimize
-    loss=tf.keras.losses.SparseCategoricalCrossentropy(),
-    # List of metrics to monitor
-    metrics=[tf.keras.metrics.SparseCategoricalAccuracy()],
-)
-
+        optimizer="adam",
+        loss="categorical_crossentropy",
+        metrics=["accuracy"]
+    )
 
     return model
+
 
     # raise NotImplementedError
 
